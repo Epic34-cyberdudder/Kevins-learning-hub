@@ -9,8 +9,8 @@ import { scramjetPath } from "@mercuryworkshop/scramjet/path";
 import { baremuxPath } from "@mercuryworkshop/bare-mux/node";
 
 const publicPath = fileURLToPath(new URL("../public/", import.meta.url));
-const epoxyPath = fileURLToPath(
-  new URL(".", import.meta.resolve("@mercuryworkshop/epoxy-transport"))
+const libcurlPath = fileURLToPath(
+  new URL(".", import.meta.resolve("@mercuryworkshop/libcurl-transport"))
 );
 
 logging.set_level(logging.NONE);
@@ -48,8 +48,8 @@ fastify.register(fastifyStatic, {
 });
 
 fastify.register(fastifyStatic, {
-  root: epoxyPath,
-  prefix: "/epoxy/",
+  root: libcurlPath,
+  prefix: "/libcurl/",
   decorateReply: false,
 });
 
