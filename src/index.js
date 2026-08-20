@@ -6,10 +6,12 @@ import { server as wisp, logging } from "@mercuryworkshop/wisp-js/server";
 import Fastify from "fastify";
 import fastifyStatic from "@fastify/static";
 import { scramjetPath } from "@mercuryworkshop/scramjet/path";
-import { libcurlPath } from "@mercuryworkshop/libcurl-transport";
 import { baremuxPath } from "@mercuryworkshop/bare-mux/node";
 
 const publicPath = fileURLToPath(new URL("../public/", import.meta.url));
+const epoxyPath = fileURLToPath(
+  new URL(".", import.meta.resolve("@mercuryworkshop/epoxy-transport"))
+);
 
 logging.set_level(logging.NONE);
 
@@ -46,8 +48,8 @@ fastify.register(fastifyStatic, {
 });
 
 fastify.register(fastifyStatic, {
-  root: libcurlPath,
-  prefix: "/libcurl/",
+  root: epoxyPath,
+  prefix: "/epoxy/",
   decorateReply: false,
 });
 

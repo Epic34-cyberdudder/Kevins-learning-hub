@@ -46,10 +46,8 @@ async function ensureReady() {
     location.host +
     "/wisp/";
 
-  if ((await connection.getTransport()) !== "/libcurl/index.mjs") {
-    await connection.setTransport("/libcurl/index.mjs", [
-      { websocket: wispUrl },
-    ]);
+  if ((await connection.getTransport()) !== "/epoxy/index.mjs") {
+    await connection.setTransport("/epoxy/index.mjs", [{ wisp: wispUrl }]);
   }
 
   ready = true;
