@@ -14,7 +14,7 @@ async function loadGames() {
   for (const game of games) {
     const card = document.createElement("a");
     card.className = "game-card";
-    card.href = game.path;
+    card.href = `play.html?src=${encodeURIComponent(game.path)}&title=${encodeURIComponent(game.title)}`;
     card.textContent = game.title;
     grid.appendChild(card);
   }
