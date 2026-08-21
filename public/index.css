@@ -143,6 +143,11 @@ body {
 
 /* --- show apps / shortcuts --- */
 
+.landing-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
 .show-apps {
   margin-top: 0.5rem;
   padding: 0.6rem 1.4rem;
@@ -152,6 +157,8 @@ body {
   color: #e6e6e6;
   font-size: 0.95rem;
   cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
 }
 
 .show-apps:hover {
