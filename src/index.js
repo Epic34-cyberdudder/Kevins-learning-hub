@@ -1,6 +1,8 @@
 import { createServer } from "node:http";
 import { fileURLToPath } from "url";
 import { hostname } from "node:os";
+import { readdir, access } from "node:fs/promises";
+import { join } from "node:path";
 
 import { server as wisp, logging } from "@mercuryworkshop/wisp-js/server";
 import Fastify from "fastify";
@@ -10,6 +12,53 @@ import { libcurlPath } from "@mercuryworkshop/libcurl-transport";
 import { baremuxPath } from "@mercuryworkshop/bare-mux/node";
 
 const publicPath = fileURLToPath(new URL("../public/", import.meta.url));
+const gamesPath = join(publicPath, "games");
+
+function humanize(name) {
+  return name
+    .replace(/\.html$/i, "")
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+async function fileExists(path) {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function listGames() {
+  let entries;
+  try {
+    entries = await readdir(gamesPath, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+
+  const games = [];
+  for (const entry of entries) {
+    if (entry.isDirectory()) {
+      const indexPath = join(gamesPath, entry.name, "index.html");
+      if (await fileExists(indexPath)) {
+        games.push({
+          title: humanize(entry.name),
+          path: `games/${entry.name}/index.html`,
+        });
+      }
+    } else if (entry.isFile() && entry.name.toLowerCase().endsWith(".html")) {
+      games.push({
+        title: humanize(entry.name),
+        path: `games/${entry.name}`,
+      });
+    }
+  }
+
+  games.sort((a, b) => a.title.localeCompare(b.title));
+  return games;
+}
 
 logging.set_level(logging.NONE);
 
@@ -55,6 +104,10 @@ fastify.register(fastifyStatic, {
   root: baremuxPath,
   prefix: "/baremux/",
   decorateReply: false,
+});
+
+fastify.get("/api/games", async () => {
+  return listGames();
 });
 
 fastify.setNotFoundHandler((res, reply) => {
