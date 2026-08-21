@@ -15,18 +15,24 @@ body {
   align-items: center;
   gap: 0.75rem;
   padding: 0 0.9rem;
-  background: #0a0a0a;
-  border-bottom: 1px solid #134e4a;
+  background: linear-gradient(135deg, #2e1065, #7e22ce);
+  border-bottom: none;
 }
 
 .browser-bar .bar-btn {
   text-decoration: none;
   font-size: 1.2rem;
+  color: #ffffff;
+}
+
+.browser-bar .bar-btn:hover {
+  color: #f0abfc;
 }
 
 .play-title {
-  color: #e6e6e6;
+  color: #f3e8ff;
   font-size: 0.95rem;
+  font-weight: 600;
 }
 
 .play-frame {
