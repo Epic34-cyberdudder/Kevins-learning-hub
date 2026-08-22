@@ -8,10 +8,14 @@ import { server as wisp, logging } from "@mercuryworkshop/wisp-js/server";
 import Fastify from "fastify";
 import fastifyStatic from "@fastify/static";
 import { scramjetPath } from "@mercuryworkshop/scramjet/path";
-import { libcurlPath } from "@mercuryworkshop/libcurl-transport";
-import { baremuxPath } from "@mercuryworkshop/bare-mux/node";
 
 const publicPath = fileURLToPath(new URL("../public/", import.meta.url));
+const controllerPath = fileURLToPath(
+  new URL(".", import.meta.resolve("@mercuryworkshop/scramjet-controller"))
+);
+const libcurlPath = fileURLToPath(
+  new URL(".", import.meta.resolve("@mercuryworkshop/libcurl-transport"))
+);
 const gamesPath = join(publicPath, "games");
 
 function humanize(name) {
@@ -90,19 +94,19 @@ fastify.register(fastifyStatic, {
 
 fastify.register(fastifyStatic, {
   root: scramjetPath,
-  prefix: "/scram/",
+  prefix: "/scramjet/",
+  decorateReply: false,
+});
+
+fastify.register(fastifyStatic, {
+  root: controllerPath,
+  prefix: "/controller/",
   decorateReply: false,
 });
 
 fastify.register(fastifyStatic, {
   root: libcurlPath,
   prefix: "/libcurl/",
-  decorateReply: false,
-});
-
-fastify.register(fastifyStatic, {
-  root: baremuxPath,
-  prefix: "/baremux/",
   decorateReply: false,
 });
 

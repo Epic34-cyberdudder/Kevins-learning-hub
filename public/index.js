@@ -1,5 +1,7 @@
 "use strict";
 
+import LibcurlClient from "/libcurl/index.mjs";
+
 const landing = document.getElementById("landing");
 const form = document.getElementById("sj-form");
 const address = document.getElementById("sj-address");
@@ -17,28 +19,37 @@ const forwardBtn = document.getElementById("sj-forward");
 const reloadBtn = document.getElementById("sj-reload");
 const homeBtn = document.getElementById("sj-home");
 
-const { ScramjetController } = $scramjetLoadController();
-
-const scramjet = new ScramjetController({
-  files: {
-    wasm: "/scram/scramjet.wasm.wasm",
-    all: "/scram/scramjet.all.js",
-    sync: "/scram/scramjet.sync.js",
-  },
-});
-
-scramjet.init();
-
-const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
-
+let controllerInstance = null;
 let frame = null;
 let ready = false;
+
+async function waitForControl(timeoutMs = 10000) {
+  if (navigator.serviceWorker.controller) return;
+
+  await new Promise((resolve) => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      navigator.serviceWorker.removeEventListener("controllerchange", onChange);
+      resolve();
+    };
+    const onChange = () => finish();
+
+    navigator.serviceWorker.addEventListener("controllerchange", onChange);
+    navigator.serviceWorker.ready.then(() => {
+      if (navigator.serviceWorker.controller) finish();
+    });
+    setTimeout(finish, timeoutMs);
+  });
+}
 
 async function ensureReady() {
   if (ready) return;
 
   await registerSW();
-  await navigator.serviceWorker.ready;
+  await waitForControl();
+  const registration = await navigator.serviceWorker.ready;
 
   const wispUrl =
     (location.protocol === "https:" ? "wss" : "ws") +
@@ -46,11 +57,15 @@ async function ensureReady() {
     location.host +
     "/wisp/";
 
-  if ((await connection.getTransport()) !== "/libcurl/index.mjs") {
-    await connection.setTransport("/libcurl/index.mjs", [
-      { websocket: wispUrl },
-    ]);
-  }
+  const transport = new LibcurlClient({ wisp: wispUrl });
+  await transport.init();
+
+  const { Controller } = globalThis.$scramjetController;
+  controllerInstance = new Controller({
+    serviceworker: navigator.serviceWorker.controller ?? registration.active,
+    transport,
+  });
+  await controllerInstance.wait();
 
   ready = true;
 }
@@ -58,16 +73,9 @@ async function ensureReady() {
 function ensureFrame() {
   if (frame) return frame;
 
-  frame = scramjet.createFrame();
-  frame.frame.id = "sj-frame";
-  document.body.appendChild(frame.frame);
-
-  frame.addEventListener("urlchange", (e) => {
-    frameUrlInput.value = e.url;
-  });
-  frame.addEventListener("navigate", (e) => {
-    frameUrlInput.value = e.url;
-  });
+  frame = controllerInstance.createFrame();
+  frame.element.id = "sj-frame";
+  document.body.appendChild(frame.element);
 
   return frame;
 }
@@ -75,13 +83,13 @@ function ensureFrame() {
 function showBrowser() {
   landing.classList.add("hidden");
   browserBar.classList.remove("hidden");
-  frame.frame.classList.remove("hidden");
+  frame.element.classList.remove("hidden");
 }
 
 function showLanding() {
   landing.classList.remove("hidden");
   browserBar.classList.add("hidden");
-  if (frame) frame.frame.classList.add("hidden");
+  if (frame) frame.element.classList.add("hidden");
 }
 
 async function go(url) {
@@ -91,7 +99,7 @@ async function go(url) {
   try {
     await ensureReady();
   } catch (err) {
-    error.textContent = "Failed to register service worker.";
+    error.textContent = "Failed to set up the proxy.";
     errorCode.textContent = err.toString();
     throw err;
   }
@@ -99,6 +107,7 @@ async function go(url) {
   ensureFrame();
   showBrowser();
   frame.go(url);
+  frameUrlInput.value = url;
 }
 
 form.addEventListener("submit", async (event) => {
@@ -123,6 +132,7 @@ frameUrlForm.addEventListener("submit", (event) => {
   if (!frame) return;
   const url = search(frameUrlInput.value, searchEngine.value);
   frame.go(url);
+  frameUrlInput.value = url;
 });
 
 backBtn.addEventListener("click", () => frame && frame.back());
