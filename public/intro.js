@@ -22,7 +22,7 @@
     x.classList.remove("show");
     await wait(450);
 
-    text.textContent = "Nah screw that!";
+    text.textContent = "Kevin's Hub";
     text.classList.remove("strike");
     void text.offsetWidth;
     text.classList.add("visible");
