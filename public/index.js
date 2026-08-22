@@ -89,7 +89,10 @@ function showBrowser() {
 function showLanding() {
   landing.classList.remove("hidden");
   browserBar.classList.add("hidden");
-  if (frame) frame.element.classList.add("hidden");
+  if (frame) {
+    frame.element.remove();
+    frame = null;
+  }
 }
 
 async function go(url) {
